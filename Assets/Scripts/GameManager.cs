@@ -8,6 +8,8 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField]
     private float _jumpRadius = 2f;
+    [SerializeField]
+    private float _jumpPadding = 0.5f;
     public float _speed = 3f;
     public List<Node> nodes = new List<Node>();
     public Dictionary<int, List<Edge>> graph;

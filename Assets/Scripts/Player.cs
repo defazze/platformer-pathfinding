@@ -45,14 +45,14 @@ public class Player : MonoBehaviour
                 var nodeIndex = _path.IndexOf(node);
 
                 var targetPoint = _targetPoint;
+                var nextPoint = _targetPoint;
                 if (nodeIndex < (_path.Count - 1))
                 {
                     var nextNode = _path[nodeIndex + 1];
                     var possibleEdges = GameManager.Instance.graph[node.id];
                     var edge = possibleEdges.Single(e => e.node.id == nextNode.id);
                     targetPoint = edge.start;
-
-                    //Debug.Log($"current node: {currentNodeId}, nextNode: {nextNode.id}, target point: {targetPoint}");
+                    nextPoint = edge.end;
                 }
 
                 var body = GetComponent<Rigidbody2D>();
@@ -67,12 +67,34 @@ public class Player : MonoBehaviour
                 }
                 else
                 {
-                    //Debug.Log("Point!");
-                    body.velocity = Vector2.zero;
+                    if (nextPoint == _targetPoint)
+                    {
+                        Debug.Log("Target!");
+                        body.velocity = Vector2.zero;
+                        _isMove = false;
+                    }
+                    else
+                    {
+                        var jumpPoint = closestPoint;
+                        jumpPoint.x -= 0.4f;
+                        nextPoint.x += 0.4f;
+
+                        var initialAngle = 60;
+                        //мы достигли края одного узла, прыгаем на другой
+                        float gravity = Physics2D.gravity.magnitude;
+
+                        float angle = initialAngle * Mathf.Deg2Rad;
+                        var jumpDistance = Mathf.Abs(jumpPoint.x - nextPoint.x);
+                        var jumpOffset = jumpPoint.y - nextPoint.y;
+
+                        float initialVelocity = (1 / Mathf.Cos(angle)) * Mathf.Sqrt((0.5f * gravity * Mathf.Pow(jumpDistance, 2)) / (jumpDistance * Mathf.Tan(angle) + jumpOffset));
+                        Vector2 velocity = new Vector2(initialVelocity * Mathf.Cos(angle), initialVelocity * Mathf.Sin(angle));
+
+                        body.velocity = velocity;
+                    }
                 }
             }
         }
-        //Debug.Log(currentNode);
     }
 
     public void OnMove(InputValue value)
