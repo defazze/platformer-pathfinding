@@ -5,8 +5,9 @@ using Unity.Mathematics;
 
 public static class NodeCalculator
 {
-    public static int GetCurrentNode(List<Node> nodes, float2 position, float radius)
+    public static int GetCurrentNode(List<Node> nodes, float2 position, float radius, out float2 closestPoint)
     {
+        closestPoint = float2.zero;
         var nodesArr = new NativeArray<NodeStruct>(nodes.Select(n =>
         new NodeStruct
         {
@@ -20,7 +21,7 @@ public static class NodeCalculator
             var node = nodesArr[i];
             if (node.start.x <= position.x && node.end.x >= position.x)
             {
-                var closestPoint = MathHelper.GetClosestPoint(node.start, node.end, position);
+                closestPoint = MathHelper.GetClosestPoint(node.start, node.end, position);
                 if (math.distance(position, closestPoint) <= radius)
                 {
                     return node.id;

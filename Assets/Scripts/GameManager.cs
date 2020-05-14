@@ -7,7 +7,8 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField]
-    private float _maxJumpRadius = 2f;
+    private float _jumpRadius = 2f;
+    public float _speed = 3f;
     public List<Node> nodes = new List<Node>();
     public Dictionary<int, List<Edge>> graph;
     public static GameManager Instance;
@@ -21,7 +22,7 @@ public class GameManager : MonoBehaviour
         var colliders = FindObjectsOfType<BoxCollider2D>();
 
         nodes = GraphBuilder.GetNodes(colliders);
-        graph = GraphBuilder.GetGraph(nodes, _maxJumpRadius);
+        graph = GraphBuilder.GetGraph(nodes, _jumpRadius);
     }
 
     void Update()
