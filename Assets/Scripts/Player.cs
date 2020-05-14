@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 using UnityEngine.InputSystem;
@@ -54,7 +55,23 @@ public class Player : MonoBehaviour
                 {
                     var inSegment = MathHelper.IsPointInSegment(node.start, node.end, hit.point);
 
-                    //TODO: запуск алгоритма пасфайдинга
+                    if (inSegment)
+                    {
+                        var currentNodeId = NodeCalculator.GetCurrentNode(GameManager.Instance.nodes, (Vector2)transform.position, 1f);
+                        if (currentNodeId != -1)
+                        {
+                            var targetNode = node;
+                            var currentNode = nodes.Single(n => n.id == currentNodeId);
+                            var path = PathBuilder.Search(GameManager.Instance.graph, nodes, currentNode, targetNode);
+
+                            foreach (var pathNode in path)
+                            {
+                                Debug.Log(pathNode.id);
+                            }
+                        }
+
+                        break;
+                    }
                 }
             }
         }

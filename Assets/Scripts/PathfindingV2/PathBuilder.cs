@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
+using UnityEngine;
 
 public static class PathBuilder
 {
-    public static void Search(NativeMultiHashMap<int, Edge> map, List<Node> nodes, Node start, Node end)
+    public static List<Node> Search(Dictionary<int, List<Edge>> map, List<Node> nodes, Node start, Node end)
     {
         nodes.ForEach(n => n.distanceFromStart = -1);
+
         start.distanceFromStart = 0;
 
         var opens = new List<Node>();
@@ -18,7 +19,7 @@ public static class PathBuilder
             var node = opens.First();
             opens.Remove(node);
 
-            var edges = GetEdges(map.GetValuesForKey(node.id)).OrderBy(e => e.cost);
+            var edges = map[node.id].OrderBy(e => e.cost);
 
             foreach (var edge in edges)
             {
@@ -28,22 +29,40 @@ public static class PathBuilder
                     if (connectedNode.distanceFromStart == -1 || connectedNode.distanceFromStart > node.distanceFromStart + edge.cost)
                     {
                         connectedNode.distanceFromStart = node.distanceFromStart + edge.cost;
+                        connectedNode.nearestToStart = node;
+
+                        if (!opens.Contains(connectedNode))
+                        {
+                            opens.Add(connectedNode);
+                        }
                     }
                 }
             }
+            node.visited = true;
+            if (node.id == end.id)
+            {
+                break;
+            }
 
         } while (opens.Any());
+
+        var path = new List<Node> { end };
+        BuildPath(nodes, path, end);
+
+        path.Reverse();
+
+        return path;
     }
 
-    private static List<Edge> GetEdges(NativeMultiHashMap<int, Edge>.Enumerator edges)
+    private static void BuildPath(List<Node> allNodes, List<Node> path, Node node)
     {
-        var result = new List<Edge>();
-
-        foreach (var edge in edges)
+        if (node.nearestToStart == null)
         {
-            result.Add(edge);
+            return;
         }
 
-        return result;
+        var nearestNode = node.nearestToStart;
+        path.Add(nearestNode);
+        BuildPath(allNodes, path, nearestNode);
     }
 }

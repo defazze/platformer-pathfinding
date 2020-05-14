@@ -35,10 +35,10 @@ public static class GraphBuilder
     {
         var result = new Dictionary<int, List<Edge>>();
 
-        var points = nodes.SelectMany(n => new[] { new NodePoint { position = n.start, node = n }, new NodePoint { position = n.end, node = n } }).ToArray();
+        var points = nodes.SelectMany(n => new[] { new NodePoint { position = n.start, node = n.id }, new NodePoint { position = n.end, node = n.id } }).ToArray();
         var nativePoints = new NativeArray<NodePoint>(points, Allocator.TempJob);
 
-        var map = new NativeMultiHashMap<int, Edge>(points.Length / 2, Allocator.TempJob);
+        var map = new NativeMultiHashMap<int, EdgeStruct>(points.Length / 2, Allocator.TempJob);
 
         var job = new CalculateEdgeJob
         {
@@ -54,11 +54,11 @@ public static class GraphBuilder
         for (int i = 0; i < keys.Length; i++)
         {
             var edges = new List<Edge>();
-            foreach (var edge in map.GetValuesForKey(keys[i]))
+            foreach (var item in map.GetValuesForKey(keys[i]))
             {
-                var tmp = edge;
-                tmp.cost = 1;
-                edges.Add(tmp);
+                var edge = new Edge { start = item.start, end = item.end };
+                edge.node = nodes.Single(n => n.id == item.nodeId);
+                edges.Add(edge);
             }
             result.Add(i, edges);
         }
@@ -72,7 +72,7 @@ public static class GraphBuilder
     [BurstCompile]
     private struct CalculateEdgeJob : IJob
     {
-        public NativeMultiHashMap<int, Edge> map;
+        public NativeMultiHashMap<int, EdgeStruct> map;
         public NativeArray<NodePoint> points;
         public float maxJumpRadius;
         public void Execute()
@@ -81,7 +81,7 @@ public static class GraphBuilder
             {
                 for (int j = 0; j < points.Length; j++)
                 {
-                    if (points[i].node.id != points[j].node.id)
+                    if (points[i].node != points[j].node)
                     {
                         if (math.distance(points[i].position, points[j].position) <= maxJumpRadius)
                         {
@@ -91,8 +91,8 @@ public static class GraphBuilder
                             var startNode = points[i].node;
                             var endNode = points[j].node;
 
-                            var edge = new Edge { start = start, end = end, node = endNode };
-                            map.Add(startNode.id, edge);
+                            var edge = new EdgeStruct { start = start, end = end, nodeId = endNode };
+                            map.Add(startNode, edge);
                         }
                     }
 

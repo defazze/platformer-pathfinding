@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-public struct Edge
+public class Edge
 {
     public float2 start;
     public float2 end;
