@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 
-public static class Pathfinder
+public static class PathBuilder
 {
     public static void Search(NativeMultiHashMap<int, Edge> map, List<Node> nodes, Node start, Node end)
     {
