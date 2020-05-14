@@ -76,10 +76,8 @@ public class Player : MonoBehaviour
                     else
                     {
                         var jumpPoint = closestPoint;
-                        jumpPoint.x -= 0.4f;
-                        nextPoint.x += 0.4f;
 
-                        var initialAngle = 60;
+                        var initialAngle = 70f;
                         //мы достигли края одного узла, прыгаем на другой
                         float gravity = Physics2D.gravity.magnitude;
 
@@ -89,6 +87,11 @@ public class Player : MonoBehaviour
 
                         float initialVelocity = (1 / Mathf.Cos(angle)) * Mathf.Sqrt((0.5f * gravity * Mathf.Pow(jumpDistance, 2)) / (jumpDistance * Mathf.Tan(angle) + jumpOffset));
                         Vector2 velocity = new Vector2(initialVelocity * Mathf.Cos(angle), initialVelocity * Mathf.Sin(angle));
+
+                        if (nextPoint.x - jumpPoint.x < 0)
+                        {
+                            velocity = -Vector2.Reflect(velocity, Vector2.up);
+                        }
 
                         body.velocity = velocity;
                     }

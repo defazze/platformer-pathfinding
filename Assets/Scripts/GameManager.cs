@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
         var colliders = FindObjectsOfType<BoxCollider2D>();
 
         nodes = GraphBuilder.GetNodes(colliders);
-        graph = GraphBuilder.GetGraph(nodes, _jumpRadius);
+        graph = GraphBuilder.GetGraph(nodes, _jumpRadius, _jumpPadding);
     }
 
     void Update()
@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
 
     void OnDrawGizmos()
     {
+
         Gizmos.color = Color.yellow;
         foreach (var node in nodes)
         {

@@ -31,26 +31,31 @@ public static class GraphBuilder
         return result;
     }
 
-    public static Dictionary<int, List<Edge>> GetGraph(IEnumerable<Node> nodes, float jumpRadius)
+    public static Dictionary<int, List<Edge>> GetGraph(IEnumerable<Node> nodes, float jumpRadius, float padding = 0)
     {
         var result = new Dictionary<int, List<Edge>>();
 
-        var points = nodes.SelectMany(n => new[] { new NodePoint { position = n.start, node = n.id }, new NodePoint { position = n.end, node = n.id } }).ToArray();
-        var nativePoints = new NativeArray<NodePoint>(points, Allocator.TempJob);
+        var nativeNodes = new NativeArray<NodeStruct>(nodes.Select(n => new NodeStruct
+        {
+            start = n.start,
+            end = n.end,
+            id = n.id
+        }).ToArray(), Allocator.TempJob);
 
-        var map = new NativeMultiHashMap<int, EdgeStruct>(points.Length / 2, Allocator.TempJob);
+        var map = new NativeMultiHashMap<int, EdgeStruct>(nodes.Count(), Allocator.TempJob);
 
         var job = new CalculateEdgeJob
         {
             map = map,
-            points = nativePoints,
-            maxJumpRadius = jumpRadius
+            nodes = nativeNodes,
+            jumpRadius = jumpRadius,
+            padding = padding
         };
 
         job.Run();
 
         var keys = map.GetKeyArray(Allocator.Temp).Distinct().ToArray();
-
+        var c = 0;
         for (int i = 0; i < keys.Length; i++)
         {
             var edges = new List<Edge>();
@@ -59,11 +64,13 @@ public static class GraphBuilder
                 var edge = new Edge { start = item.start, end = item.end };
                 edge.node = nodes.Single(n => n.id == item.nodeId);
                 edges.Add(edge);
+                c++;
             }
-            result.Add(i, edges);
+            result.Add(keys[i], edges);
         }
 
-        nativePoints.Dispose();
+
+        nativeNodes.Dispose();
         map.Dispose();
 
         return result;
@@ -73,31 +80,65 @@ public static class GraphBuilder
     private struct CalculateEdgeJob : IJob
     {
         public NativeMultiHashMap<int, EdgeStruct> map;
-        public NativeArray<NodePoint> points;
-        public float maxJumpRadius;
+        public NativeArray<NodeStruct> nodes;
+        public float jumpRadius;
+        public float padding;
+
         public void Execute()
         {
-            for (int i = 0; i < points.Length; i++)
+            for (int i = 0; i < nodes.Length; i++)
             {
-                for (int j = 0; j < points.Length; j++)
+                for (int j = 0; j < nodes.Length; j++)
                 {
-                    if (points[i].node != points[j].node)
+                    if (nodes[i].id != nodes[j].id)
                     {
-                        if (math.distance(points[i].position, points[j].position) <= maxJumpRadius)
+                        var edge = GetEdge(nodes[i], nodes[j], true);
+                        if (edge.nodeId != -1)
                         {
-                            var start = points[i].position;
-                            var end = points[j].position;
+                            map.Add(nodes[i].id, edge);
+                        }
 
-                            var startNode = points[i].node;
-                            var endNode = points[j].node;
-
-                            var edge = new EdgeStruct { start = start, end = end, nodeId = endNode };
-                            map.Add(startNode, edge);
+                        edge = GetEdge(nodes[i], nodes[j], false);
+                        if (edge.nodeId != -1)
+                        {
+                            map.Add(nodes[i].id, edge);
                         }
                     }
-
                 }
             }
+        }
+
+        private EdgeStruct GetEdge(NodeStruct startNode, NodeStruct endNode, bool isStart)
+        {
+            var start = isStart ? startNode.start : startNode.end;
+
+            var edge = new EdgeStruct { nodeId = -1 };
+
+            var toStartDistance = math.distance(start, endNode.start);
+            var toEndDistance = math.distance(start, endNode.end);
+
+            if (toStartDistance <= jumpRadius || toEndDistance <= jumpRadius)
+            {
+                var startPoint = math.normalize(isStart ? startNode.end - startNode.start : startNode.start - startNode.end) * padding + start;
+
+                bool toStart = !(toStartDistance > jumpRadius || toStartDistance > toEndDistance);
+
+                var endPoint = float2.zero;
+                if (toStart)
+                {
+                    endPoint = math.normalize(endNode.end - endNode.start) * padding + endNode.start;
+                }
+                else
+                {
+                    endPoint = math.normalize(endNode.start - endNode.end) * padding + endNode.end;
+                }
+
+                edge.start = startPoint;
+                edge.end = endPoint;
+                edge.nodeId = endNode.id;
+            }
+
+            return edge;
         }
     }
 }
