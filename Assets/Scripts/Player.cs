@@ -34,17 +34,20 @@ public class Player : MonoBehaviour
 
             if (currentNodeId == -1)
             {
-                //мы в прыжке
+                //мы в прыжке, пока ничего делать не надо
 
             }
             else
             {
-                //мы где-то стоим
+                //мы на поверхности, надо куда то двигаться
                 var node = GameManager.Instance.nodes.Single(n => n.id == currentNodeId);
                 var nodeIndex = _path.IndexOf(node);
 
                 var targetPoint = _targetPoint.Value;
                 var nextPoint = _targetPoint.Value;
+
+                float jumpAngle = 0;
+
                 if (nodeIndex < (_path.Count - 1))
                 {
                     var nextNode = _path[nodeIndex + 1];
@@ -52,6 +55,7 @@ public class Player : MonoBehaviour
                     var edge = possibleEdges.Single(e => e.node.id == nextNode.id);
                     targetPoint = edge.start;
                     nextPoint = edge.end;
+                    jumpAngle = edge.jumpAngle;
                 }
 
                 var body = GetComponent<Rigidbody2D>();
@@ -74,17 +78,16 @@ public class Player : MonoBehaviour
                     }
                     else
                     {
+                        //мы достигли края одного узла, прыгаем на другой
                         var jumpPoint = closestPoint;
 
-                        var initialAngle = 70f;
-                        //мы достигли края одного узла, прыгаем на другой
                         float gravity = Physics2D.gravity.magnitude;
 
-                        float angle = initialAngle * Mathf.Deg2Rad;
+                        float angle = jumpAngle;
                         var jumpDistance = Mathf.Abs(jumpPoint.x - nextPoint.x);
-                        var jumpOffset = jumpPoint.y - nextPoint.y;
+                        var jumpHeight = jumpPoint.y - nextPoint.y;
 
-                        float initialVelocity = (1 / Mathf.Cos(angle)) * Mathf.Sqrt((0.5f * gravity * Mathf.Pow(jumpDistance, 2)) / (jumpDistance * Mathf.Tan(angle) + jumpOffset));
+                        float initialVelocity = (1 / Mathf.Cos(angle)) * Mathf.Sqrt((0.5f * gravity * Mathf.Pow(jumpDistance, 2)) / (jumpDistance * Mathf.Tan(angle) + jumpHeight));
                         Vector2 velocity = new Vector2(initialVelocity * Mathf.Cos(angle), initialVelocity * Mathf.Sin(angle));
 
                         if (nextPoint.x - jumpPoint.x < 0)
@@ -148,17 +151,17 @@ public class Player : MonoBehaviour
                             {
                                 _targetPoint = hit.point;
 
-
-                                Debug.Log($"Current node: {currentNode.id}, target node: {targetNode.id}");
-                                foreach (var pathNode in _path)
-                                {
-                                    Debug.Log(pathNode.id);
-                                }
+                                /*
+                                                                Debug.Log($"Current node: {currentNode.id}, target node: {targetNode.id}");
+                                                                foreach (var pathNode in _path)
+                                                                {
+                                                                    Debug.Log(pathNode.id);
+                                                                }*/
                             }
                             else
                             {
                                 _targetPoint = null;
-                                Debug.Log("No way");
+                                Debug.Log("No way :(");
                             }
                         }
 

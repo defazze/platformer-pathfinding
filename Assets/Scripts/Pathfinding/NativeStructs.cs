@@ -11,6 +11,7 @@ public struct EdgeStruct
     public float2 start;
     public float2 end;
     public int nodeId;
+    public float jumpAngle;
 }
 
 public struct NodeStruct

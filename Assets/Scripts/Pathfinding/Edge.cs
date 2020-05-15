@@ -6,4 +6,5 @@ public class Edge
     public float2 end;
     public Node node;
     public int cost;
+    public float jumpAngle;
 }
