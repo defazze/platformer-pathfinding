@@ -6,7 +6,7 @@ public static class PathBuilder
 {
     public static List<Node> Search(Dictionary<int, List<Edge>> map, List<Node> nodes, Node start, Node end)
     {
-        nodes.ForEach(n => n.distanceFromStart = -1);
+        nodes.ForEach(n => { n.distanceFromStart = -1; n.nearestToStart = null; n.visited = false; });
 
         start.distanceFromStart = 0;
 

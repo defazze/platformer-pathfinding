@@ -9,9 +9,8 @@ public class Player : MonoBehaviour
 {
     private Vector2 _pivotOffset;
     private float _buttomOffset;
-    private bool _isMove;
     private List<Node> _path;
-    private Vector2 _targetPoint;
+    private Vector2? _targetPoint;
 
     void Start()
     {
@@ -28,7 +27,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (_isMove)
+        if (_targetPoint.HasValue)
         {
             var point = (Vector2)transform.position + _pivotOffset;
             var currentNodeId = NodeCalculator.GetCurrentNode(GameManager.Instance.nodes, point, _buttomOffset, out var closestPoint);
@@ -44,8 +43,8 @@ public class Player : MonoBehaviour
                 var node = GameManager.Instance.nodes.Single(n => n.id == currentNodeId);
                 var nodeIndex = _path.IndexOf(node);
 
-                var targetPoint = _targetPoint;
-                var nextPoint = _targetPoint;
+                var targetPoint = _targetPoint.Value;
+                var nextPoint = _targetPoint.Value;
                 if (nodeIndex < (_path.Count - 1))
                 {
                     var nextNode = _path[nodeIndex + 1];
@@ -71,7 +70,7 @@ public class Player : MonoBehaviour
                     {
                         Debug.Log("Target!");
                         body.velocity = Vector2.zero;
-                        _isMove = false;
+                        _targetPoint = null;
                     }
                     else
                     {
@@ -138,20 +137,20 @@ public class Player : MonoBehaviour
 
                     if (inSegment)
                     {
-                        var currentNodeId = NodeCalculator.GetCurrentNode(GameManager.Instance.nodes, (Vector2)transform.position, 1f, out var _);
+                        var currentNodeId = NodeCalculator.GetCurrentNode(nodes, (Vector2)transform.position, 1f, out var _);
                         if (currentNodeId != -1)
                         {
                             var targetNode = node;
                             var currentNode = nodes.Single(n => n.id == currentNodeId);
                             _path = PathBuilder.Search(GameManager.Instance.graph, nodes, currentNode, targetNode);
-                            _isMove = true;
                             _targetPoint = hit.point;
 
                             /*
-                            foreach (var pathNode in _path)
-                            {
-                                Debug.Log(pathNode.id);
-                            }*/
+                                                        Debug.Log($"Current node: {currentNode.id}, target node: {targetNode.id}");
+                                                        foreach (var pathNode in _path)
+                                                        {
+                                                            Debug.Log(pathNode.id);
+                                                        }*/
                         }
 
                         break;
