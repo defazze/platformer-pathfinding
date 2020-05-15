@@ -142,15 +142,24 @@ public class Player : MonoBehaviour
                         {
                             var targetNode = node;
                             var currentNode = nodes.Single(n => n.id == currentNodeId);
-                            _path = PathBuilder.Search(GameManager.Instance.graph, nodes, currentNode, targetNode);
-                            _targetPoint = hit.point;
+                            _path = PathBuilder.Search(GameManager.Instance.graph, nodes, currentNode, targetNode, out var pathExist);
 
-                            /*
-                                                        Debug.Log($"Current node: {currentNode.id}, target node: {targetNode.id}");
-                                                        foreach (var pathNode in _path)
-                                                        {
-                                                            Debug.Log(pathNode.id);
-                                                        }*/
+                            if (pathExist)
+                            {
+                                _targetPoint = hit.point;
+
+
+                                Debug.Log($"Current node: {currentNode.id}, target node: {targetNode.id}");
+                                foreach (var pathNode in _path)
+                                {
+                                    Debug.Log(pathNode.id);
+                                }
+                            }
+                            else
+                            {
+                                _targetPoint = null;
+                                Debug.Log("No way");
+                            }
                         }
 
                         break;

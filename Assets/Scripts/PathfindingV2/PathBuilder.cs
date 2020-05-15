@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class PathBuilder
 {
-    public static List<Node> Search(Dictionary<int, List<Edge>> map, List<Node> nodes, Node start, Node end)
+    public static List<Node> Search(Dictionary<int, List<Edge>> map, List<Node> nodes, Node start, Node end, out bool pathExist)
     {
         nodes.ForEach(n => { n.distanceFromStart = -1; n.nearestToStart = null; n.visited = false; });
 
@@ -50,6 +50,8 @@ public static class PathBuilder
         BuildPath(nodes, path, end);
 
         path.Reverse();
+
+        pathExist = !(path.Count == 1 && start.id != end.id);
 
         return path;
     }

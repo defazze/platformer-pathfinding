@@ -90,55 +90,54 @@ public static class GraphBuilder
             {
                 for (int j = 0; j < nodes.Length; j++)
                 {
-                    if (nodes[i].id != nodes[j].id)
+                    var startNode = nodes[i];
+                    var endNode = nodes[j];
+
+                    if (startNode.id != endNode.id)
                     {
-                        var edge = GetEdge(nodes[i], nodes[j], true);
-                        if (edge.nodeId != -1)
+                        var edged = false;
+                        var startPoint = float2.zero;
+                        var endPoint = float2.zero;
+
+                        //Конечная нода справа от начальной, нет пересечения по x
+                        if (endNode.start.x >= startNode.end.x)
                         {
-                            map.Add(nodes[i].id, edge);
+                            if (math.distance(startNode.end, endNode.start) <= jumpRadius)
+                            {
+                                startPoint = ApplyPadding(startNode.end, startNode.start);
+                                endPoint = ApplyPadding(endNode.start, endNode.end);
+                                edged = true;
+                            }
+                        }
+                        //Конечная нода слева от начальной, нет пересечения по x
+                        else if (endNode.end.x <= startNode.start.x)
+                        {
+                            if (math.distance(startNode.start, endNode.end) <= jumpRadius)
+                            {
+                                startPoint = ApplyPadding(startNode.start, startNode.end);
+                                endPoint = ApplyPadding(endNode.end, endNode.start);
+                                edged = true;
+                            }
                         }
 
-                        edge = GetEdge(nodes[i], nodes[j], false);
-                        if (edge.nodeId != -1)
+                        if (edged)
                         {
-                            map.Add(nodes[i].id, edge);
+                            var edge = new EdgeStruct();
+                            edge.start = startPoint;
+                            edge.end = endPoint;
+                            edge.nodeId = endNode.id;
+
+                            map.Add(startNode.id, edge);
                         }
                     }
                 }
             }
         }
 
-        private EdgeStruct GetEdge(NodeStruct startNode, NodeStruct endNode, bool isStart)
+        private float2 ApplyPadding(float2 point, float2 paddingVector)
         {
-            var start = isStart ? startNode.start : startNode.end;
-
-            var edge = new EdgeStruct { nodeId = -1 };
-
-            var toStartDistance = math.distance(start, endNode.start);
-            var toEndDistance = math.distance(start, endNode.end);
-
-            if (toStartDistance <= jumpRadius || toEndDistance <= jumpRadius)
-            {
-                var startPoint = math.normalize(isStart ? startNode.end - startNode.start : startNode.start - startNode.end) * padding + start;
-
-                bool toStart = !(toStartDistance > jumpRadius || toStartDistance > toEndDistance);
-
-                var endPoint = float2.zero;
-                if (toStart)
-                {
-                    endPoint = math.normalize(endNode.end - endNode.start) * padding + endNode.start;
-                }
-                else
-                {
-                    endPoint = math.normalize(endNode.start - endNode.end) * padding + endNode.end;
-                }
-
-                edge.start = startPoint;
-                edge.end = endPoint;
-                edge.nodeId = endNode.id;
-            }
-
-            return edge;
+            var result = math.normalize(paddingVector - point) * padding + point;
+            return result;
         }
     }
 }
